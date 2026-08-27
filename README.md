@@ -10,8 +10,8 @@ Don't fight the nervous energy. Give it somewhere to go.
 
 ## ✨ Features
 
-- **Kinetic Chrono-Gear Fidget:** An interactive mechanical gear instrument with 24 precision micro-indices and a counter-rotating planetary constellation. Holding accelerates rotation speed with velocity-synchronized haptic ticks and realistic inertial coast-down.
-- **1-Tap Instant Reset:** Open the app, tap `I'M NERVOUS`, discharge restless motor tension, and tap `GO`. Zero decision fatigue.
+- **Kinetic Chrono-Horology Instrument:** High-detail SVG vector instrument with 36 Guilloché dial indices, cardinal diamond markers, and 3 planetary satellite pinion gears that orbit and counter-rotate in real-time. Holding accelerates rotation speed with velocity-synchronized haptic ticks and realistic inertial coast-down.
+- **1-Tap Instant Reset:** Open the app, tap `I'M NERVOUS`, discharge restless motor tension on the kinetic instrument, and tap `GO`. Zero decision fatigue.
 - **30-Second Emergency Reset:** 10s sensory fidget discharge + 20s paced breathing (4s inhale / 6s exhale).
 - **100% Offline & Private:** No sign-up, no login, no analytics, no remote APIs, and no ads. Works in airplane mode.
 - **Automatic Dark & Light Mode:** Tailored warm-cream and deep charcoal palette.
@@ -38,6 +38,7 @@ Just a direct, tactile sensory reset that gets you off your phone and into your 
 
 - **Framework:** React Native + Expo (SDK 54)
 - **Language:** TypeScript
+- **Graphics:** `react-native-svg` (pure vector math & native driver animation)
 - **Navigation:** `@react-navigation/native` + `@react-navigation/native-stack`
 - **Haptics:** `expo-haptics`
 - **Storage:** `@react-native-async-storage/async-storage` (local session counter only)
@@ -82,7 +83,7 @@ Just a direct, tactile sensory reset that gets you off your phone and into your 
 ```
 src/
 ├── components/          # Reusable UI & sensory components
-│   ├── FidgetTrigger.tsx# Kinetic chrono-gear with haptic physics
+│   ├── FidgetTrigger.tsx# Kinetic SVG chrono-gear with planetary pinions
 │   ├── BreathingCircle.tsx # 60fps breathing animation circle
 │   ├── PrimaryButton.tsx# Tactile spring-press CTA button
 │   └── SecondaryButton.tsx # Subtle action button
