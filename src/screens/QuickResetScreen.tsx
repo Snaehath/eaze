@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,31 +17,46 @@ import { BreathingCircle } from '../components/BreathingCircle';
 import { FidgetTrigger } from '../components/FidgetTrigger';
 import { useBreathing } from '../hooks/useBreathing';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { useSafeTimeout } from '../utils/timing';
+import { useSafeTimeout, useSafeInterval } from '../utils/timing';
 import { useHaptics } from '../hooks/useHaptics';
 import { useSession } from '../hooks/useSession';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'QuickReset'>;
 
+type QPhase = 'trigger' | 'breathing' | 'done';
+
+/**
+ * 30-Second Reset — Zero-friction emergency ritual
+ *
+ * Contract:
+ * 1. 10s Tactile Release (Kinetic Gear)
+ * 2. 20s Paced Breathing (4s Inhale / 6s Exhale)
+ * 3. DONE: "YOU'RE READY." -> GO (Single satisfying haptic pop)
+ *
+ * Fully automatic progression. No manual intermediate screens.
+ */
 export function QuickResetScreen() {
   const navigation = useNavigation<Nav>();
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? darkColors : lightColors;
   const reduceMotion = useReducedMotion();
   const { set: safeTimeout } = useSafeTimeout();
+  const { set: safeInterval } = useSafeInterval();
   const haptics = useHaptics();
   const { recordSession } = useSession();
 
-  type QPhase = 'trigger' | 'breathing' | 'done';
   const [phase, setPhase] = useState<QPhase>('trigger');
+  const [triggerSecsRemaining, setTriggerSecsRemaining] = useState(10);
+  const isMountedRef = useRef(true);
 
   const handleBreathingComplete = useCallback(() => {
+    if (!isMountedRef.current) return;
     setPhase('done');
     haptics.success();
   }, [haptics]);
 
-  const { phase: breathPhase, animatedValue, timeRemaining, start: startBreathing } =
+  const { phase: breathPhase, animatedValue, timeRemaining, start: startBreathing, stop: stopBreathing } =
     useBreathing({
       inhaleDuration: 4000,
       exhaleDuration: 6000,
@@ -50,54 +65,96 @@ export function QuickResetScreen() {
       reduceMotion,
     });
 
+  // Phase 1: 10s Trigger Timer
   useEffect(() => {
+    isMountedRef.current = true;
+
+    // Countdown interval for the 10s trigger phase
+    safeInterval(() => {
+      setTriggerSecsRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    // Auto-advance to breathing after exactly 10 seconds
     safeTimeout(() => {
+      if (!isMountedRef.current) return;
       setPhase('breathing');
-      setTimeout(() => startBreathing(), 300);
+      haptics.light();
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          startBreathing();
+        }
+      }, 200);
     }, 10000);
+
+    return () => {
+      isMountedRef.current = false;
+      stopBreathing();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGo = useCallback(() => {
     haptics.success();
     recordSession().catch(() => {});
-    setTimeout(() => navigation.navigate('Home'), 300);
+    setTimeout(() => {
+      navigation.navigate('Home');
+    }, 250);
   }, [haptics, recordSession, navigation]);
 
-  const handleSkip = useCallback(() => {
+  const handleCancel = useCallback(() => {
+    stopBreathing();
     navigation.navigate('Home');
-  }, [navigation]);
+  }, [stopBreathing, navigation]);
 
-  const secs = timeRemaining % 60;
+  const breathSecs = timeRemaining % 60;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
-        {/* Header */}
+        {/* Top bar */}
         <View style={styles.topBar}>
           <Text style={[styles.wordmark, { color: colors.accent }]}>30 SEC RESET</Text>
-          <SecondaryButton
-            label="Cancel"
-            onPress={handleSkip}
-            testID="btn-quick-cancel"
-          />
+          {phase !== 'done' && (
+            <SecondaryButton
+              label="Cancel"
+              onPress={handleCancel}
+              testID="btn-quick-cancel"
+            />
+          )}
         </View>
 
+        {/* Phase 1: 10s Tactile Discharge */}
         {phase === 'trigger' && (
           <>
+            <View style={styles.headerArea}>
+              <Text style={[styles.kicker, { color: colors.accent }]}>DISCHARGE</Text>
+              <Text style={[styles.phaseHeading, { color: colors.textPrimary }]}>
+                Discharge{'\n'}the energy.
+              </Text>
+            </View>
+
             <View style={styles.centerArea}>
               <FidgetTrigger reduceMotion={reduceMotion} />
             </View>
+
             <View style={styles.bottomArea}>
-              <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                Discharge the restless energy.{'\n'}Breathing begins in a moment.
+              <Text style={[styles.timerText, { color: colors.textTertiary }]}>
+                Breathing starts in {triggerSecsRemaining}s
               </Text>
             </View>
           </>
         )}
 
+        {/* Phase 2: 20s Paced Breathing */}
         {phase === 'breathing' && (
           <>
+            <View style={styles.headerArea}>
+              <Text style={[styles.kicker, { color: colors.accent }]}>BREATHE</Text>
+              <Text style={[styles.phaseHeading, { color: colors.textPrimary }]}>
+                Now become{'\n'}still.
+              </Text>
+            </View>
+
             <View style={styles.centerArea}>
               <BreathingCircle
                 phase={breathPhase}
@@ -105,14 +162,16 @@ export function QuickResetScreen() {
                 reduceMotion={reduceMotion}
               />
             </View>
+
             <View style={styles.bottomArea}>
               <Text style={[styles.timerText, { color: colors.textTertiary }]}>
-                {secs}s remaining
+                {breathSecs}s remaining
               </Text>
             </View>
           </>
         )}
 
+        {/* Phase 3: Completion Moment */}
         {phase === 'done' && (
           <>
             <View style={styles.doneArea}>
@@ -120,9 +179,10 @@ export function QuickResetScreen() {
                 YOU'RE{'\n'}READY.
               </Text>
               <Text style={[styles.doneSub, { color: colors.textSecondary }]}>
-                Take a breath and walk in.
+                You don't need to feel fearless.{'\n'}You just need to begin.
               </Text>
             </View>
+
             <View style={styles.bottomArea}>
               <PrimaryButton label="GO" onPress={handleGo} testID="btn-quick-go" />
             </View>
@@ -146,34 +206,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 36,
   },
   wordmark: {
     fontSize: fontSize.label,
     fontWeight: fontWeight.bold,
     letterSpacing: letterSpacing.widest,
   },
+  headerArea: {
+    paddingTop: spacing.xs,
+    gap: spacing.xxs,
+  },
+  kicker: {
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.bold,
+    letterSpacing: letterSpacing.widest,
+    textTransform: 'uppercase',
+  },
+  phaseHeading: {
+    fontSize: fontSize.heading,
+    fontWeight: fontWeight.black,
+    letterSpacing: letterSpacing.tight,
+    lineHeight: fontSize.heading * lineHeight.tight,
+  },
   centerArea: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   bottomArea: {
-    paddingBottom: spacing.sm,
-  },
-  hintText: {
-    fontSize: fontSize.bodySmall,
-    textAlign: 'center',
-    lineHeight: fontSize.bodySmall * lineHeight.relaxed,
+    paddingBottom: spacing.xs,
   },
   timerText: {
     fontSize: fontSize.label,
     fontWeight: fontWeight.medium,
     letterSpacing: letterSpacing.wide,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
   doneArea: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
+    paddingHorizontal: spacing.sm,
   },
   doneHeading: {
     fontSize: fontSize.hero,
@@ -185,5 +261,6 @@ const styles = StyleSheet.create({
   doneSub: {
     fontSize: fontSize.body,
     textAlign: 'center',
+    lineHeight: fontSize.body * lineHeight.relaxed,
   },
 });

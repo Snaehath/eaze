@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   Animated,
+  AppState,
   Pressable,
   StyleSheet,
   Text,
@@ -115,7 +116,16 @@ export function FidgetTrigger({ reduceMotion = false }: Props) {
 
     animFrameIdRef.current = requestAnimationFrame(loop);
 
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState !== 'active') {
+        isHoldingRef.current = false;
+        setIsHolding(false);
+        velocityRef.current = 0;
+      }
+    });
+
     return () => {
+      subscription.remove();
       if (animFrameIdRef.current) {
         cancelAnimationFrame(animFrameIdRef.current);
       }

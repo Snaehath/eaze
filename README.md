@@ -4,13 +4,13 @@
 
 `eaze` is a tiny, offline-first mobile app designed for moments of acute pre-event nervousness — right before a job interview, presentation, exam, performance, date, or difficult conversation.
 
-Don't fight the nervous energy. Give it somewhere to go.
+Let's get you steady.
 
 ---
 
 ## ✨ Features
 
-- **Kinetic Chrono-Horology Instrument:** High-detail SVG vector instrument with 36 Guilloché dial indices, cardinal diamond markers, and 3 planetary satellite pinion gears that orbit and counter-rotate in real-time. Holding accelerates rotation speed with velocity-synchronized haptic ticks and realistic inertial coast-down.
+- **Kinetic Chrono-Horology Instrument:** High-detail SVG vector instrument with precision Guilloché dial indices, cardinal diamond markers, and 3 planetary satellite pinion gears that orbit and counter-rotate in real-time. Holding accelerates rotation speed with velocity-synchronized haptic ticks and realistic inertial coast-down.
 - **1-Tap Instant Reset:** Open the app, tap `I'M NERVOUS`, discharge restless motor tension on the kinetic instrument, and tap `GO`. Zero decision fatigue.
 - **30-Second Emergency Reset:** 10s sensory fidget discharge + 20s paced breathing (4s inhale / 6s exhale).
 - **100% Offline & Private:** No sign-up, no login, no analytics, no remote APIs, and no ads. Works in airplane mode.

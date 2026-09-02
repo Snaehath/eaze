@@ -110,7 +110,7 @@ export function HomeScreen() {
               Feeling{'\n'}nervous?
             </Text>
             <Text style={[styles.sub, { color: colors.textSecondary }]} allowFontScaling>
-              Let's turn that energy{'\n'}into something useful.
+              Let's get you steady.
             </Text>
           </View>
 
