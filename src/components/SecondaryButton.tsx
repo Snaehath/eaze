@@ -8,7 +8,9 @@ import {
 } from 'react-native';
 import { lightColors, darkColors } from '../theme/colors';
 import { fontSize, fontWeight, letterSpacing } from '../theme/typography';
-import { spacing, radius, buttonHeight, hitSlop } from '../theme/spacing';
+import { spacing, buttonHeight, hitSlop } from '../theme/spacing';
+import { radius } from '../theme/radii';
+
 
 type Props = {
   label: string;

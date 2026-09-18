@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
 /**
@@ -6,19 +6,29 @@ import { AccessibilityInfo } from 'react-native';
  * When true, replace complex animations with simple opacity fades.
  */
 export function useReducedMotion(): boolean {
-  const ref = useRef(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     AccessibilityInfo.isReduceMotionEnabled().then((val) => {
-      ref.current = val;
+      if (isMounted) {
+        setReduceMotion(val);
+      }
     });
 
     const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (val) => {
-      ref.current = val;
+      if (isMounted) {
+        setReduceMotion(val);
+      }
     });
 
-    return () => sub.remove();
+    return () => {
+      isMounted = false;
+      sub.remove();
+    };
   }, []);
 
-  return ref.current;
+  return reduceMotion;
 }
+

@@ -10,9 +10,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { lightColors, darkColors } from '../theme/colors';
+
 import { fontSize, fontWeight, letterSpacing, lineHeight } from '../theme/typography';
-import { spacing, radius } from '../theme/spacing';
+import { spacing } from '../theme/spacing';
+import { radius } from '../theme/radii';
 import { SecondaryButton } from '../components/SecondaryButton';
+
+
+
 import {
   getSessionsCompleted,
   getLastSessionDate,

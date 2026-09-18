@@ -1,21 +1,21 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Animated,
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useColorScheme,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { lightColors, darkColors } from '../theme/colors';
-import { fontSize, fontWeight, letterSpacing, lineHeight } from '../theme/typography';
-import { spacing, radius, buttonHeight } from '../theme/spacing';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { SecondaryButton } from '../components/SecondaryButton';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { darkColors, lightColors } from '../theme/colors';
+import { spacing } from '../theme/spacing';
+import { motionDurations, motionSprings } from '../theme/motion';
+import { EazeContainer } from '../components/eaze/EazeContainer';
+import { EazeText } from '../components/eaze/EazeText';
+import { EazeButton } from '../components/eaze/EazeButton';
+import { EazeBadge } from '../components/eaze/EazeBadge';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import {
   getSessionsCompleted,
   getLastSessionDate,
@@ -25,30 +25,54 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
+/**
+ * HomeScreen — eaze landing screen
+ *
+ * Target Hierarchy:
+ * - Wordmark "eaze" + Quiet Session Badge
+ * - Feeling nervous? / Let's get you steady.
+ * - [ I'M NERVOUS ] (Primary 60px tactile CTA)
+ * - [ 30 SEC RESET ]  [ WHAT IS THIS? ] (Secondary action row)
+ * - Last reset indicator (quiet footer)
+ */
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? darkColors : lightColors;
+  const reduceMotion = useReducedMotion();
 
   const [sessions, setSessions] = useState<number | null>(null);
   const [lastDate, setLastDate] = useState<string | null>(null);
 
-  const fadeIn = useRef(new Animated.Value(0)).current;
-  const slideUp = useRef(new Animated.Value(30)).current;
+  const fadeIn = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+  const slideUp = useRef(new Animated.Value(reduceMotion ? 0 : 24)).current;
 
   useEffect(() => {
-    // Load stats
-    Promise.all([getSessionsCompleted(), getLastSessionDate()]).then(([count, date]) => {
-      setSessions(count);
-      setLastDate(date);
-    });
+    // Load local storage session counters
+    Promise.all([getSessionsCompleted(), getLastSessionDate()]).then(
+      ([count, date]) => {
+        setSessions(count);
+        setLastDate(date);
+      },
+    );
 
-    // Entry animation
-    Animated.parallel([
-      Animated.timing(fadeIn, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(slideUp, { toValue: 0, useNativeDriver: true, speed: 12, bounciness: 4 }),
-    ]).start();
-  }, [fadeIn, slideUp]);
+    // Entry animation (respects reduced motion)
+    if (!reduceMotion) {
+      Animated.parallel([
+        Animated.timing(fadeIn, {
+          toValue: 1,
+          duration: motionDurations.deliberate,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideUp, {
+          toValue: 0,
+          useNativeDriver: true,
+          speed: motionSprings.appear.speed,
+          bounciness: motionSprings.appear.bounciness,
+        }),
+      ]).start();
+    }
+  }, [fadeIn, slideUp, reduceMotion]);
 
   const handleNervous = useCallback(() => {
     navigation.navigate('Release');
@@ -67,30 +91,25 @@ export function HomeScreen() {
   }, [navigation]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+    <EazeContainer>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* Top bar */}
+        {/* Top Bar: Wordmark + Session Count Badge */}
         <View style={styles.topBar}>
-          <Text style={[styles.wordmark, { color: colors.accent }]} allowFontScaling={false}>
+          <EazeText
+            variant="label"
+            color={colors.accent}
+            weight="black"
+            allowFontScaling={false}
+          >
             eaze
-          </Text>
+          </EazeText>
+
           {sessions !== null && sessions > 0 && (
-            <Pressable
-              onPress={handleHistory}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              accessibilityLabel={`History — ${sessions} sessions`}
-              accessibilityRole="button"
-            >
-              <View style={[styles.badge, { backgroundColor: colors.accentFaint }]}>
-                <Text style={[styles.badgeText, { color: colors.accent }]}>
-                  {sessions}
-                </Text>
-              </View>
-            </Pressable>
+            <EazeBadge count={sessions} onPress={handleHistory} />
           )}
         </View>
 
@@ -100,97 +119,79 @@ export function HomeScreen() {
             { opacity: fadeIn, transform: [{ translateY: slideUp }] },
           ]}
         >
-          {/* Heading */}
+          {/* Header Block: Problem Formulation */}
           <View style={styles.headingBlock}>
-            <Text
-              style={[styles.heading, { color: colors.textPrimary }]}
-              allowFontScaling
+            <EazeText
+              variant="display"
+              color={colors.textPrimary}
               accessibilityRole="header"
             >
               Feeling{'\n'}nervous?
-            </Text>
-            <Text style={[styles.sub, { color: colors.textSecondary }]} allowFontScaling>
+            </EazeText>
+            <EazeText variant="body" color={colors.textSecondary}>
               Let's get you steady.
-            </Text>
+            </EazeText>
           </View>
 
-          {/* Primary CTA */}
-          <View style={styles.ctaBlock}>
-            <PrimaryButton
+          {/* Primary CTA: 1-Tap Instant Grounding */}
+          <View style={styles.primaryCtaBlock}>
+            <EazeButton
               label="I'M NERVOUS"
+              variant="primary"
               onPress={handleNervous}
+              accessibilityLabel="I'm nervous. Start instant sensory reset."
               testID="btn-nervous"
             />
           </View>
 
-          {/* Secondary row */}
+          {/* Secondary Actions: 30s Reset & Concept Explainer */}
           <View style={styles.secondaryRow}>
-            <Pressable
+            <EazeButton
+              label="30 SEC RESET"
+              variant="secondary"
               onPress={handleQuickReset}
-              style={({ pressed }) => [
-                styles.quickResetBtn,
-                { borderColor: colors.border, opacity: pressed ? 0.6 : 1 },
-              ]}
-              accessibilityLabel="30 second quick reset"
-              accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="30 second guided reset"
               testID="btn-quick-reset"
-            >
-              <Text style={[styles.quickResetText, { color: colors.textSecondary }]}>
-                30 SEC RESET
-              </Text>
-            </Pressable>
-
-            <SecondaryButton
-              label="What is this?"
+            />
+            <EazeButton
+              label="WHAT IS THIS?"
+              variant="ghost"
               onPress={handleAbout}
+              accessibilityLabel="What is this? Learn about eaze"
               testID="btn-about"
             />
           </View>
 
-          {/* Last session hint */}
+          {/* Subtle Last Reset Footer */}
           {lastDate && (
-            <Text style={[styles.lastSession, { color: colors.textTertiary }]}>
-              Last reset: {formatLastSessionDate(lastDate)}
-            </Text>
+            <View style={styles.footer}>
+              <EazeText
+                variant="micro"
+                color={colors.textTertiary}
+                align="center"
+              >
+                LAST RESET: {formatLastSessionDate(lastDate).toUpperCase()}
+              </EazeText>
+            </View>
           )}
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </EazeContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-  },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxxl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 40,
     marginBottom: spacing.xxxl,
-  },
-  wordmark: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.black,
-    letterSpacing: letterSpacing.tight,
-  },
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
-    borderRadius: radius.pill,
-    minWidth: 32,
-    alignItems: 'center',
-  },
-  badgeText: {
-    fontSize: fontSize.label,
-    fontWeight: fontWeight.bold,
   },
   content: {
     flex: 1,
@@ -198,46 +199,20 @@ const styles = StyleSheet.create({
   },
   headingBlock: {
     marginBottom: spacing.xxxl,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  heading: {
-    fontSize: fontSize.hero,
-    fontWeight: fontWeight.black,
-    letterSpacing: letterSpacing.tight,
-    lineHeight: fontSize.hero * lineHeight.tight,
-  },
-  sub: {
-    fontSize: fontSize.body,
-    lineHeight: fontSize.body * lineHeight.relaxed,
-    fontWeight: fontWeight.regular,
-  },
-  ctaBlock: {
-    marginBottom: spacing.lg,
+  primaryCtaBlock: {
+    marginBottom: spacing.md,
   },
   secondaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
-  quickResetBtn: {
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    height: buttonHeight.secondary,
-    paddingHorizontal: spacing.lg,
-    justifyContent: 'center',
+  footer: {
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
     alignItems: 'center',
-  },
-  quickResetText: {
-    fontSize: fontSize.bodySmall,
-    fontWeight: fontWeight.medium,
-    letterSpacing: letterSpacing.wide,
-    textTransform: 'uppercase',
-  },
-  lastSession: {
-    fontSize: fontSize.tiny,
-    textAlign: 'center',
-    letterSpacing: letterSpacing.wide,
-    textTransform: 'uppercase',
   },
 });

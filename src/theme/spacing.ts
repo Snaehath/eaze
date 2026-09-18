@@ -1,4 +1,5 @@
 export const spacing = {
+  none: 0,
   xxs: 4,
   xs: 8,
   sm: 12,
@@ -9,18 +10,10 @@ export const spacing = {
   xxxl: 64,
 } as const;
 
-export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  pill: 100,
-  circle: 9999,
-} as const;
-
 export const buttonHeight = {
-  primary: 64,
-  secondary: 48,
+  primary: 60,
+  secondary: 44,
+  compact: 36,
 } as const;
 
 export const hitSlop = {
@@ -29,3 +22,6 @@ export const hitSlop = {
   left: 12,
   right: 12,
 } as const;
+
+export const minTouchTarget = 48;
+

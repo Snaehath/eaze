@@ -34,12 +34,15 @@ export function useHaptics() {
   const countdown = useCallback((tick: number) => {
     if (tick >= 4) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    } else if (tick === 3) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } else {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
     }
   }, []);
 
-  return { light, medium, heavy, success, warning, countdown };
+  const transition = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+  }, []);
+
+  return { light, medium, heavy, success, warning, transition, countdown };
 }
+

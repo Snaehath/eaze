@@ -4,36 +4,43 @@ export const fontFamily = Platform.select({
   ios: {
     regular: 'System',
     medium: 'System',
+    semibold: 'System',
     bold: 'System',
   },
   android: {
     regular: 'sans-serif',
     medium: 'sans-serif-medium',
+    semibold: 'sans-serif-medium',
     bold: 'sans-serif',
   },
   default: {
     regular: 'System',
     medium: 'System',
+    semibold: 'System',
     bold: 'System',
   },
 });
 
 export const fontSize = {
-  /** Hero — screen title */
-  hero: 48,
-  /** Display — large heading */
-  display: 36,
-  /** Heading */
+  /** Display — large hero titles ("Feeling nervous?", "YOU'RE READY.") */
+  display: 44,
+  /** Hero — alias for display */
+  hero: 44,
+  /** Heading — screen and section headers */
   heading: 28,
-  /** Subheading */
+  /** Subheading — secondary headers */
   subheading: 20,
-  /** Body */
+  /** Body — primary readable copy */
   body: 17,
-  /** Secondary body */
+  /** Secondary body / descriptive copy */
   bodySmall: 15,
-  /** Label / caption */
+  /** Button label */
+  button: 15,
+  /** Label / metadata / navigation kicker */
   label: 13,
-  /** Tiny */
+  /** Micro-label — timestamps, subtle counters */
+  micro: 11,
+  /** Tiny — alias for micro */
   tiny: 11,
   /** Countdown numbers */
   countdown: 80,
@@ -54,9 +61,9 @@ export const lineHeight = {
 } as const;
 
 export const letterSpacing = {
-  tight: -0.5,
+  tight: -0.6,
   normal: 0,
-  wide: 1,
-  wider: 2,
-  widest: 4,
+  wide: 0.8,
+  wider: 1.6,
+  widest: 3.2,
 } as const;
